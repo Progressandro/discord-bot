@@ -5,7 +5,7 @@ import {
   GatewayIntentBits,
   Message
 } from 'discord.js';
-import { Player } from 'discord-player';
+import { GuildQueue, Player } from 'discord-player';
 import { dirname, join } from 'path';
 import { readdirSync } from 'fs';
 
@@ -88,8 +88,12 @@ console.log('Extractors loaded successfully');
 // Event listeners for player events
 let queueMessage: Message | null = null;
 
-player.events.on('audioTrackAdd', (queue: any, song: any) => {
-  const channel = queue.metadata.channel;
+player.events.on('audioTrackAdd', (queue: GuildQueue, song: any) => {
+  if (!queue.channel) {
+    console.error('Queue metadata does not contain channel information');
+    return;
+  }
+  const channel = queue.channel;
 
   if (channel) {
     if (!queueMessage) {
