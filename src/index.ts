@@ -9,6 +9,7 @@ import {
 import { Player } from 'discord-player';
 import { dirname, join } from 'path';
 import { readdirSync } from 'fs';
+import { getQueueMessage, setQueueMessage } from './utils/stateHandler';
 
 import customPreview from './utils/embedPreview';
 import config from '../config.json';
@@ -87,7 +88,7 @@ player.extractors.loadDefault();
 console.log('Extractors loaded successfully');
 
 // Event listeners for player events
-let queueMessage: Message | null = null;
+let queueMessage = getQueueMessage();
 
 player.events.on('audioTrackAdd', (queue, song) => {
   if (!queue.channel) {
@@ -102,8 +103,13 @@ player.events.on('audioTrackAdd', (queue, song) => {
         .send({
           embeds: [customPreview('NEW SONG ADDED TO THE QUEUE', song.title)]
         })
+<<<<<<< HEAD
         .then((message: Message) => (queueMessage = message))
         .catch((error) =>
+=======
+        .then((message: Message) => setQueueMessage(message))
+        .catch((error: string) =>
+>>>>>>> 90fac1a (State handler global del Message Queue)
           console.error(
             'Something went wrong trying to add a new song to the queue:',
             error
