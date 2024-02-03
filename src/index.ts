@@ -1,8 +1,11 @@
-import dotenv from 'dotenv';
-dotenv.config();
-import Client from './client/Client.js';
-import activityJson from '../config.json' with { type: 'json' };
-import { Collection, Status } from 'discord.js';
+import {
+  Client,
+  Collection,
+  Events,
+  GatewayIntentBits,
+  Message
+} from 'discord.js';
+import { Player } from 'discord-player';
 import { dirname, join } from 'path';
 import { readdirSync } from 'fs';
 
@@ -18,37 +21,74 @@ interface CustomClient extends Client {
 }
 
 // Initialize Discord client
-const client = new Client();
+const client: CustomClient = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildVoiceStates,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent
+  ]
+});
+
+// Load commands
 client.commands = new Collection();
 
 const __dirname = dirname(import.meta.url).replace('file://', '');
 
 const commandsDir = join(__dirname, 'commands');
-const commandFiles = readdirSync(commandsDir).filter((file) =>
-  file.endsWith('.js')
-);
-console.log(commandFiles);
 
-for (const file of commandFiles) {
-  const filePath = join(commandsDir, file);
-  const command = await import(`${filePath}`);
-  console.log(command);
+try {
+  const commandFiles: string[] = readdirSync(commandsDir).filter((file) =>
+    file.endsWith('.ts')
+  );
 
-  client.commands.set(command.name, command);
+  for (const file of commandFiles) {
+    const filePath = join(commandsDir, file);
+    import(`${filePath}`)
+      .then((module) => {
+        const command = module;
+        console.log(command);
+        if (client.commands) {
+          client.commands.set(command.name, command);
+          console.log(`Loaded ${client.commands.size} commands`, '0 commands');
+        } else {
+          console.error('client.commands is undefined');
+        }
+      })
+      .catch((error) => {
+        console.error(error.message);
+      });
+  }
+} catch (error) {
+  console.error('Error loading commands:', error);
 }
 
-console.log(`Loaded ${client.commands.size} commands`);
+// Load client
+client.on(Events.ClientReady, (readyClient: Client<true>) => {
+  console.log(`${readyClient.user.tag} is ready!`);
+
+  try {
+    //Set presence
+    client.user?.presence.set({
+      activities: [
+        { name: config.activity, type: Number(config.activityType) }
+      ],
+      status: 'online'
+    });
+  } catch (error) {
+    console.error('Something went wrong:', error);
+  }
+});
 
 // Initialize Discord player
 const player = new Player(client);
-player.extractors
-  .loadDefault()
-  .then((r) => console.log('Extractors loaded successfully'));
+player.extractors.loadDefault();
+console.log('Extractors loaded successfully');
 
 // Event listeners for player events
 let queueMessage: Message | null = null;
 
-player.events.on('audioTrackAdd', (queue, song) => {
+player.events.on('audioTrackAdd', (queue: any, song: any) => {
   const channel = queue.metadata.channel;
 
   if (channel) {
@@ -83,7 +123,11 @@ player.events.on('audioTrackAdd', (queue, song) => {
   }
 });
 
-player.events.on('audioTracksAdd', (queue, track) => {
+player.events.on('playerStart', (queue: any, track: any) => {
+  queue.metadata.channel.send(`▶ | Started playing: **${track.title}**!`);
+});
+
+player.events.on('audioTracksAdd', (queue: any, track: any) => {
   queue.metadata.channel.send(`🎶 | Tracks have been queued!`);
 });
 
@@ -118,33 +162,6 @@ player.events.on('error', (queue, error) =>
   )
 );
 
-// For debugging
-// player.on('debug', async message => {
-//   console.log(`General player debug event: ${message}`);
-// });
-
-// player.events.on('debug', async (queue, message) => {
-//   console.log(`Player debug event: ${message}`);
-// });
-
-// player.events.on('playerError', (queue, error) => {
-//   console.log(`Player error event: ${error.message}`);
-//   console.log(error);
-// });
-
-// event listener for client ready
-client.on('ready', () => {
-  console.log('Bot is ready!');
-  try {
-    client.user.presence.set({
-      activities: [{ name: activity, type: Number(activityType) }],
-      status: Status.Ready
-    });
-  } catch (error) {
-    console.error(error.message);
-  }
-});
-
 // Event listeners for client reconnection and disconnection
 client.once('reconnecting', () => console.log('Reconnecting!'));
 client.once('disconnect', () => console.log('Disconnect!'));
@@ -159,6 +176,8 @@ client.on('messageCreate', async (message: Message) => {
     message.author.id === client.application?.owner?.id
   ) {
     try {
+      // TODO - change this ts-ignore
+      //@ts-ignore
       await message.guild.commands.set(client.commands);
       message.reply('Deployed!');
     } catch (error: any) {
