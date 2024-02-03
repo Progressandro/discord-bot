@@ -90,12 +90,14 @@ console.log('Extractors loaded successfully');
 // Event listeners for player events
 let queueMessage = getQueueMessage();
 
+// No tocar la queue.metadata.channel;
+
 player.events.on('audioTrackAdd', (queue, song) => {
-  if (!queue.channel) {
+  if (!queue.metadata.channel) {
     console.error('Queue metadata does not contain channel information');
     return;
   }
-  const channel = queue.channel;
+  const channel = queue.metadata.channel;
 
   if (channel) {
     if (!queueMessage) {
