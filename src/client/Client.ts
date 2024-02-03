@@ -1,8 +1,13 @@
-import { Client, Collection, GatewayIntentBits } from 'discord.js';
+import {
+  Client,
+  ClientOptions,
+  Collection,
+  GatewayIntentBits
+} from 'discord.js';
 
 export default class extends Client {
   commands: Collection<string, any>;
-  config: any;
+  config: ClientOptions;
   constructor(config: any) {
     super({
       intents: [
