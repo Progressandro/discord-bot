@@ -103,13 +103,8 @@ player.events.on('audioTrackAdd', (queue, song) => {
         .send({
           embeds: [customPreview('NEW SONG ADDED TO THE QUEUE', song.title)]
         })
-<<<<<<< HEAD
-        .then((message: Message) => (queueMessage = message))
-        .catch((error) =>
-=======
         .then((message: Message) => setQueueMessage(message))
         .catch((error: string) =>
->>>>>>> 90fac1a (State handler global del Message Queue)
           console.error(
             'Something went wrong trying to add a new song to the queue:',
             error
