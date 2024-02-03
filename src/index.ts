@@ -2,7 +2,12 @@ import dotenv from 'dotenv';
 dotenv.config();
 import Client from './client/Client.js';
 import activityJson from '../config.json';
-import { Collection, Status } from 'discord.js';
+import {
+  ApplicationCommandDataResolvable,
+  Collection,
+  Message,
+  PresenceUpdateStatus
+} from 'discord.js';
 import { dirname, join } from 'path';
 import { readdirSync } from 'fs';
 
@@ -40,13 +45,13 @@ console.log(`Loaded ${client.commands.size} commands`);
 const player = new Player(client);
 player.extractors
   .loadDefault()
-  .then((r) => console.log('Extractors loaded successfully'));
+  .then((_r) => console.log('Extractors loaded successfully'));
 
 // Event listeners for player events
-let queueMessage = null;
+let queueMessage: Message | null = null;
 
 player.events.on('audioTrackAdd', (queue, song) => {
-  const channel = queue.metadata.channel;
+  const { channel } = queue;
 
   if (channel) {
     if (!queueMessage) {
@@ -62,7 +67,7 @@ player.events.on('audioTrackAdd', (queue, song) => {
   }
 });
 
-player.events.on('audioTracksAdd', (queue, track) => {
+player.events.on('audioTracksAdd', (queue, _track) => {
   queue.metadata.channel.send(`🎶 | Tracks have been queued!`);
 });
 
@@ -77,7 +82,7 @@ player.events.on('emptyChannel', (queue) => {
   if (channel) {
     channel
       .send('Nobody is in the voice channel, leaving...')
-      .then((message) => {
+      .then((message: Message) => {
         setTimeout(() => {
           message.delete();
         }, 30000);
@@ -115,11 +120,12 @@ player.events.on('error', (queue, error) =>
 client.on('ready', () => {
   console.log('Bot is ready!');
   try {
+    if (!client.user) throw new Error('Client user is not defined');
     client.user.presence.set({
       activities: [{ name: activity, type: Number(activityType) }],
-      status: Status.Ready
+      status: PresenceUpdateStatus.Online
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error(error.message);
   }
 });
@@ -138,9 +144,11 @@ client.on('messageCreate', async (message) => {
     message.author.id === client.application?.owner?.id
   ) {
     try {
-      await message.guild.commands.set(client.commands);
+      await message.guild.commands.set(
+        client.commands as unknown as ApplicationCommandDataResolvable[]
+      );
       message.reply('Deployed!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Something went wrong:', error.message);
       message.reply(
         'Clould not deploy commands! Make sure the bot has the application.commands permission!'
@@ -162,7 +170,7 @@ client.on('interactionCreate', async (interaction) => {
     } else {
       command.execute(interaction);
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error(error.message);
     await interaction.followUp({
       content: 'There was an error trying to execute that command!'
