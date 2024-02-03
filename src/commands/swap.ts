@@ -1,6 +1,6 @@
 import { ApplicationCommandOptionType } from 'discord.js';
-import { Track, useQueue } from 'discord-player';
 import { isInVoiceChannel } from '../utils/voicechannel';
+import { useQueue } from 'discord-player';
 
 export const name = 'swap';
 export const description = 'swap song positions in the queue!';

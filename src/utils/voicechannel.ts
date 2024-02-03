@@ -1,6 +1,6 @@
-import { GuildMember } from 'discord.js';
+import { CommandInteraction, GuildMember } from 'discord.js';
 
-const isInVoiceChannel = (interaction) => {
+const isInVoiceChannel = (interaction: CommandInteraction) => {
   if (
     !(interaction.member instanceof GuildMember) ||
     !interaction.member.voice.channel
@@ -13,7 +13,7 @@ const isInVoiceChannel = (interaction) => {
   }
 
   if (
-    interaction.guild.members.me.voice.channelId &&
+    interaction.guild?.members.me?.voice.channelId &&
     interaction.member.voice.channelId !==
       interaction.guild.members.me.voice.channelId
   ) {
