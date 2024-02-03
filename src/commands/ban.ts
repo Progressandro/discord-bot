@@ -1,4 +1,7 @@
-import { ApplicationCommandOptionType } from 'discord.js';
+import {
+  ApplicationCommandOptionType,
+  ChatInputCommandInteraction
+} from 'discord.js';
 
 export const name = 'ban';
 export const description = 'Ban a player';
@@ -10,7 +13,7 @@ export const options = [
     required: true
   }
 ];
-export function execute(interaction: any, client: any) {
+export function execute(interaction: ChatInputCommandInteraction, client: any) {
   const member = interaction.options.getUser('user');
 
   if (!member) {
@@ -19,13 +22,13 @@ export function execute(interaction: any, client: any) {
     );
   }
 
-  if (!interaction.member.permissions.has('BAN_MEMBERS')) {
+  if (!interaction.member?.permissions.toString().includes('BAN_MEMBERS')) {
     return interaction.reply("I can't ban this user.");
   }
 
   const userinfo = client.users.cache.getMember(member);
 
-  return interaction.guild.members
+  return interaction.guild?.members
     .ban(member)
     .then(() => {
       interaction.reply({

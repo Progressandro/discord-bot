@@ -1,4 +1,7 @@
-import { ApplicationCommandOptionType } from 'discord.js';
+import {
+  ApplicationCommandOptionType,
+  ChatInputCommandInteraction
+} from 'discord.js';
 import { QueryType, useQueue, useMainPlayer } from 'discord-player';
 import { isInVoiceChannel } from '../utils/voicechannel';
 
@@ -12,7 +15,7 @@ export const options = [
     required: true
   }
 ];
-export async function execute(interaction: any) {
+export async function execute(interaction: ChatInputCommandInteraction) {
   try {
     const inVoiceChannel = isInVoiceChannel(interaction);
     if (!inVoiceChannel) {
@@ -23,6 +26,7 @@ export async function execute(interaction: any) {
 
     const player = useMainPlayer();
     const query = interaction.options.getString('query');
+    if (!query) return;
     const searchResult = await player
       ?.search(query, {
         requestedBy: interaction.user,
@@ -32,11 +36,11 @@ export async function execute(interaction: any) {
     if (!searchResult || !searchResult.tracks.length)
       return void interaction.followUp({ content: 'No results were found!' });
 
-    const queue = useQueue(interaction.guild.id);
+    if (!interaction.guildId) return;
+    const queue = useQueue(interaction.guildId);
 
     try {
-      if (!queue?.connection)
-        await queue?.connect(interaction.member.voice.channel);
+      if (!queue?.connection) await queue?.connect(interaction.channelId);
     } catch {
       return void interaction.followUp({
         content: 'Could not join your voice channel!'
