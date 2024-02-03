@@ -3,9 +3,10 @@ import {
   Collection,
   Events,
   GatewayIntentBits,
-  Message
+  Message,
+  PresenceUpdateStatus
 } from 'discord.js';
-import { GuildQueue, Player } from 'discord-player';
+import { Player } from 'discord-player';
 import { dirname, join } from 'path';
 import { readdirSync } from 'fs';
 
@@ -64,7 +65,7 @@ try {
 }
 
 // Load client
-client.on(Events.ClientReady, (readyClient: Client<true>) => {
+client.on(Events.ClientReady, (readyClient) => {
   console.log(`${readyClient.user.tag} is ready!`);
 
   try {
@@ -73,7 +74,7 @@ client.on(Events.ClientReady, (readyClient: Client<true>) => {
       activities: [
         { name: config.activity, type: Number(config.activityType) }
       ],
-      status: 'online'
+      status: PresenceUpdateStatus.Online
     });
   } catch (error) {
     console.error('Something went wrong:', error);
@@ -88,7 +89,7 @@ console.log('Extractors loaded successfully');
 // Event listeners for player events
 let queueMessage: Message | null = null;
 
-player.events.on('audioTrackAdd', (queue: GuildQueue, song: any) => {
+player.events.on('audioTrackAdd', (queue, song) => {
   if (!queue.channel) {
     console.error('Queue metadata does not contain channel information');
     return;
@@ -102,7 +103,7 @@ player.events.on('audioTrackAdd', (queue: GuildQueue, song: any) => {
           embeds: [customPreview('NEW SONG ADDED TO THE QUEUE', song.title)]
         })
         .then((message: Message) => (queueMessage = message))
-        .catch((error: string) =>
+        .catch((error) =>
           console.error(
             'Something went wrong trying to add a new song to the queue:',
             error
@@ -114,7 +115,7 @@ player.events.on('audioTrackAdd', (queue: GuildQueue, song: any) => {
         .edit({
           embeds: [customPreview('NEW SONG ADDED TO THE QUEUE', song.title)]
         })
-        .catch((error: string) =>
+        .catch((error) =>
           console.error(
             'Something went wrong trying to edit the queue message:',
             error
@@ -127,11 +128,11 @@ player.events.on('audioTrackAdd', (queue: GuildQueue, song: any) => {
   }
 });
 
-player.events.on('playerStart', (queue: any, track: any) => {
+player.events.on('playerStart', (queue, track) => {
   queue.metadata.channel.send(`▶ | Started playing: **${track.title}**!`);
 });
 
-player.events.on('audioTracksAdd', (queue: any, track: any) => {
+player.events.on('audioTracksAdd', (queue, _track) => {
   queue.metadata.channel.send(`🎶 | Tracks have been queued!`);
 });
 
@@ -141,7 +142,7 @@ player.events.on('disconnect', (queue) =>
   )
 );
 
-player.events.on('emptyChannel', (queue: any) => {
+player.events.on('emptyChannel', (queue) => {
   const channel = queue.metadata.channel;
   if (channel) {
     channel
@@ -184,7 +185,7 @@ client.on('messageCreate', async (message: Message) => {
       //@ts-ignore
       await message.guild.commands.set(client.commands);
       message.reply('Deployed!');
-    } catch (error: any) {
+    } catch (error) {
       console.error('Something went wrong:', error.message);
       message.reply(
         'Clould not deploy commands! Make sure the bot has the application.commands permission!'
@@ -194,7 +195,7 @@ client.on('messageCreate', async (message: Message) => {
 });
 
 // Event listener for interaction - Interactions
-client.on('interactionCreate', async (interaction: any) => {
+client.on('interactionCreate', async (interaction) => {
   if (!interaction.isCommand()) return;
 
   if (!client.commands) return;
