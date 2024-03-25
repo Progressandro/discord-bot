@@ -1,0 +1,6 @@
+- Create a Youtube Search Function ✅
+- Fix the bot channel interaction: 
+  ~ When a the bot is in an empty channel and it's called from another channel with users, should change of channel
+  ~ When the bot is 30s in a channel with no users, should left the channel
+  ~ When the bot is in a channel with users and it is beign used, others users from another channel can not call him
+- Change the bot description for the current song in play queue
