@@ -14,6 +14,7 @@ import { getQueueMessage, setQueueMessage } from './utils/stateHandler';
 import customPreview from './utils/embedPreview';
 import config from '../config.json';
 import dotenv from 'dotenv';
+import { monitorUsage } from './utils/monitorUsage';
 
 dotenv.config();
 
@@ -68,6 +69,8 @@ try {
 // Load client
 client.on(Events.ClientReady, (readyClient) => {
   console.log(`${readyClient.user.tag} is ready!`);
+
+  monitorUsage(process.pid)
 
   try {
     //Set presence
