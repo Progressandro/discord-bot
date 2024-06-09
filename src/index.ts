@@ -50,10 +50,10 @@ try {
     import(`${filePath}`)
       .then((module) => {
         const command = module;
-        console.log(command);
+        // console.log(command);
         if (client.commands) {
           client.commands.set(command.name, command);
-          console.log(`Loaded ${client.commands.size} commands`, '0 commands');
+          // console.log(`Loaded ${client.commands.size} commands`, '0 commands');
         } else {
           console.error('client.commands is undefined');
         }
@@ -69,8 +69,7 @@ try {
 // Load client
 client.on(Events.ClientReady, (readyClient) => {
   console.log(`${readyClient.user.tag} is ready!`);
-
-  monitorUsage(process.pid)
+  // monitorUsage(process.pid);
 
   try {
     //Set presence
@@ -93,8 +92,36 @@ console.log('Extractors loaded successfully');
 // Event listeners for player events
 let queueMessage = getQueueMessage();
 
-// No tocar la queue.metadata.channel;
+/*
+ * Bot connection State
+ * Disconnect when they're not users in the channel
+ */
+client.on('voiceStateUpdate', (oldState, newState) => {
+  // Get the bot's voice connection
+  const botMember = newState.guild.members.me;
 
+  // Check if the bot is connected to a voice channel
+  if (botMember?.voice.channel) {
+    const voiceChannel = botMember.voice.channel;
+
+    // Check if the bot is alone in the voice channel
+    if (voiceChannel.members.size === 1) {
+      setTimeout(() => {
+        botMember.guild.members.me?.voice.disconnect();
+      }, 3000);
+    }
+  }
+});
+
+player.events.on('disconnect', (queue) => {
+  console.log(queue.connection?.eventNames);
+
+  queue.metadata.channel.send(
+    '❌ | I was disconnected from the voice channel because no users were using me. Clearing queue!'
+  );
+});
+
+// No tocar la queue.metadata.channel;
 player.events.on('audioTrackAdd', (queue, song) => {
   if (!queue.metadata.channel) {
     console.error('Queue metadata does not contain channel information');
@@ -142,26 +169,21 @@ player.events.on('audioTracksAdd', (queue, _track) => {
   queue.metadata.channel.send(`🎶 | Tracks have been queued!`);
 });
 
-player.events.on('disconnect', (queue) =>
-  queue.metadata.channel.send(
-    '❌ | I was manually disconnected from the voice channel, clearing queue!'
-  )
-);
-
-player.events.on('emptyChannel', (queue) => {
-  const channel = queue.metadata.channel;
-  if (channel) {
-    channel
-      .send('Nobody is in the voice channel, leaving...')
-      .then((message: Message) => {
-        setTimeout(() => {
-          message.delete();
-        }, 30000);
-      });
-  } else {
-    console.error('Queue metadata does not contain channel information');
-  }
-});
+// player.events.on('emptyChannel', (queue) => {
+//   const channel = queue.metadata.channel;
+//   if (channel) {
+//     channel
+//       .send('Nobody is in the voice channel, leaving...')
+//       .then((message: Message) => {
+//         setTimeout(() => {
+//           console.log('Nobody is in the channel');
+//           message.delete();
+//         }, 3000);
+//       });
+//   } else {
+//     console.error('Queue metadata does not contain channel information');
+//   }
+// });
 
 player.events.on('emptyQueue', (queue) =>
   queue.metadata.channel.send('✅ | Queue finished!')
