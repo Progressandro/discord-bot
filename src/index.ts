@@ -4,12 +4,14 @@ import {
   Events,
   GatewayIntentBits,
   Message,
-  PresenceUpdateStatus
+  PresenceUpdateStatus,
+  EmbedBuilder
 } from 'discord.js';
 import { Player } from 'discord-player';
 import { dirname, join } from 'path';
 import { readdirSync } from 'fs';
 import { getQueueMessage, setQueueMessage } from './utils/stateHandler';
+import { execute as nowPlayingCommandExecute } from './commands/nowplaying';
 
 import customPreview from './utils/embedPreview';
 import config from '../config.json';
@@ -69,7 +71,7 @@ try {
 // Load client
 client.on(Events.ClientReady, (readyClient) => {
   console.log(`${readyClient.user.tag} is ready!`);
-  // monitorUsage(process.pid);
+  monitorUsage(process.pid);
 
   try {
     //Set presence
@@ -161,29 +163,13 @@ player.events.on('audioTrackAdd', (queue, song) => {
   }
 });
 
-player.events.on('playerStart', (queue, track) => {
+player.events.on('playerStart', async (queue, track) => {
   queue.metadata.channel.send(`▶ | Started playing: **${track.title}**!`);
 });
 
 player.events.on('audioTracksAdd', (queue, _track) => {
   queue.metadata.channel.send(`🎶 | Tracks have been queued!`);
 });
-
-// player.events.on('emptyChannel', (queue) => {
-//   const channel = queue.metadata.channel;
-//   if (channel) {
-//     channel
-//       .send('Nobody is in the voice channel, leaving...')
-//       .then((message: Message) => {
-//         setTimeout(() => {
-//           console.log('Nobody is in the channel');
-//           message.delete();
-//         }, 3000);
-//       });
-//   } else {
-//     console.error('Queue metadata does not contain channel information');
-//   }
-// });
 
 player.events.on('emptyQueue', (queue) =>
   queue.metadata.channel.send('✅ | Queue finished!')
